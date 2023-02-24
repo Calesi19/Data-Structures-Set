@@ -53,10 +53,14 @@ public:
    }
    set(const std::initializer_list <T> & il)
    {
+       for (auto it = il.begin(); it != il.end(); ++it)
+           bst.insert(*it);
    }
    template <class Iterator>
    set(Iterator first, Iterator last)
    {
+       for (auto it = first; it != last; ++it)
+           bst.insert(*it);
    }
   ~set() { }
 
@@ -76,6 +80,9 @@ public:
    }
    set & operator = (const std::initializer_list <T> & il)
    {
+       bst.clear();
+       for (auto it = il.begin(); it != il.end(); ++it)
+           bst.insert(*it);
        return *this;
    }
    void swap(set& rhs) noexcept
@@ -90,11 +97,11 @@ public:
    class iterator;
    iterator begin() const noexcept 
    { 
-      return iterator();
+      return iterator(bst.begin());
    }
    iterator end() const noexcept 
    { 
-      return iterator(); 
+      return iterator(bst.end()); 
    }
 
    //
@@ -102,7 +109,7 @@ public:
    //
    iterator find(const T& t) 
    { 
-      return iterator(); 
+      return iterator(bst.find(t)); 
    }
 
    //
@@ -122,20 +129,28 @@ public:
    //
    std::pair<iterator, bool> insert(const T& t)
    {
-      std::pair<iterator, bool> p(iterator(), true);
-      return p;
+       auto result = bst.insert(t);
+       iterator it(result.first);
+       std::pair<iterator, bool> p(it, result.second);
+       return p;
    }
    std::pair<iterator, bool> insert(T&& t)
    {
-      std::pair<iterator, bool> p(iterator(), true);
-      return p;
+       auto result = bst.insert(std::move(t));
+       iterator it(result.first);
+       std::pair<iterator, bool> p(it, result.second);
+       return p;
    }
    void insert(const std::initializer_list <T>& il)
    {
+       for (auto it = il.begin(); it != il.end(); ++it)
+           bst.insert(*it);
    }
    template <class Iterator>
    void insert(Iterator first, Iterator last)
    {
+       for (auto it = first; it != last; ++it)
+           bst.insert(*it);
    }
 
 
@@ -144,18 +159,26 @@ public:
    //
    void clear() noexcept 
    { 
+       bst.clear();
    }
    iterator erase(iterator &it)
    { 
-      return iterator(); 
+       iterator returnIt(it);
+       ++returnIt;
+       bst.erase(*it);
+       return returnIt;
    }
    size_t erase(const T & t) 
    {
-      return 99;
+       return bst.size();  //fix
    }
    iterator erase(iterator &itBegin, iterator &itEnd)
    {
-      return iterator();
+       while (itBegin != itEnd)
+       {
+           itBegin = erase(itBegin);
+       }
+       return itEnd;
    }
 
 private:
@@ -246,13 +269,28 @@ private:
 template <typename T>
 bool operator == (const set <T> & lhs, const set <T> & rhs)
 {
-   return true;
+    if (lhs.size() != rhs.size())
+        return false;
+
+    auto itLhs = lhs.begin();
+    auto itRhs = rhs.begin();
+
+    while (itLhs != lhs.end() && itRhs != rhs.end())
+    {
+        if (*itLhs != *itRhs)
+            return false;
+
+        ++itLhs;
+        ++itRhs;
+    }
+
+    return true;
 }
 
 template <typename T>
 inline bool operator != (const set <T> & lhs, const set <T> & rhs)
 {
-   return true;
+    return !(lhs == rhs);
 }
 
 /***********************************************
@@ -262,13 +300,45 @@ inline bool operator != (const set <T> & lhs, const set <T> & rhs)
 template <typename T>
 bool operator < (const set <T> & lhs, const set <T> & rhs)
 {
-   return true;
+    auto itLhs = lhs.begin();
+    auto itRhs = rhs.begin();
+
+    while (itLhs != lhs.end() && itRhs != rhs.end())
+    {
+        if (*itLhs < *itRhs)
+            return true;
+
+        if (*itRhs < *itLhs)
+            return false;
+
+        ++itLhs;
+        ++itRhs;
+    }
+
+    // if one set is a prefix of the other, then the shorter one is lexicographically first
+    return lhs.size() < rhs.size();
 }
 
 template <typename T>
 inline bool operator > (const set <T> & lhs, const set <T> & rhs)
 {
-   return true;
+    auto itLhs = lhs.begin();
+    auto itRhs = rhs.begin();
+
+    while (itLhs != lhs.end() && itRhs != rhs.end())
+    {
+        if (*itLhs > *itRhs)
+            return true;
+
+        if (*itRhs > *itLhs)
+            return false;
+
+        ++itLhs;
+        ++itRhs;
+    }
+
+    // if one set is a prefix of the other, then the shorter one is lexicographically first
+    return lhs.size() < rhs.size();
 }
 
 }; // namespace custom

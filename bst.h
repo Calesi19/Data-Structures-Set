@@ -132,7 +132,7 @@ private:
           if (pDelete == nullptr)
               return;
           deleteBinaryTree(pDelete->pLeft);
-          deleteBinaryTree(pDelete->pLeft);
+          deleteBinaryTree(pDelete->pRight);
 
           delete pDelete;
           pDelete = nullptr;
